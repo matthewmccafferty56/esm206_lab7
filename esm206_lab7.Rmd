@@ -1,0 +1,123 @@
+---
+title: "Lab7 Multiple Linear regression"
+author: "Matthew McCafferty"
+date: "11/9/2021"
+output: html_document
+---
+
+```{r setup, include=TRUE, message=FALSE, warning=FALSE, results=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(kableExtra)
+library(stargazer)
+library(palmerpenguins)
+library(broom)
+library(GGally)
+library(modelsummary)
+```
+
+## Explore Penguins
+
+Use GGally::ggpairs() to creat pairs plot. 
+
+```{r}
+ggpairs(penguins)
+```
+Lets simplify the variables that we include in our gg pairs plot
+
+-species
+-bill_length_mm through body_mass_g
+
+```{r}
+penguins %>% 
+  select(species, bill_length_mm:body_mass_g) %>% 
+  ggpairs(aes(color = species))
+```
+
+## Mutiple Linear Regression
+
+Understand the relationships between multiple predictor variables and an outcome which is penguins body mass. 
+
+The different variables we are going to try are:
+
+-species
+-flipper length
+-sex 
+-bill depth
+
+### Model 1
+
+Model body mass based only on flipper length and bill depth
+Bad idea... There are important variables missing
+
+```{r}
+model_1 <- lm(body_mass_g ~ flipper_length_mm + bill_depth_mm, data = penguins)
+
+
+# Call Model by name to return only coeeficients:
+model_1
+
+# More information on coefficients on 
+summary(model_1)
+
+```
+If everything elese is held constant, we expect that for each 1mm increase in flipper length, penguin body mass is expected to increase by 51.54g on average. 
+
+The R squared value means 76 percent of variance in the penguin body mass (dependent variable) is explained by the model and bill depth 
+
+We think that a model for penguins body mass should contain  variables species, flipper length, and penguin sex. 
+
+```{r}
+model_2 <- lm(body_mass_g ~ flipper_length_mm + species + sex, data = penguins)
+
+# lets check out the coeffecients:
+model_2
+
+summary(model_2)
+
+# Try interpreting the coefficients for: flipper length, Gentoo, and male
+```
+On avg we expect a Gentoo penguin is 836.26g larger than an adeile female penguin if everything else remains constant. 
+
+## Visualize this model
+
+```{r}
+ggplot(data = penguins, aes(x= flipper_length_mm, y= body_mass_g)) +
+  geom_point(aes(color = species))+
+  facet_wrap(~ sex)
+```
+
+## A couple ways to get & report MLR model outcomes 
+
+Use broom::tidy to get 
+
+```{r}
+penguins_model2_coef <- tidy(model_2)
+
+penguins_model2_coef
+```
+
+  
+
+```{r}
+plot(model_2)
+
+summary(model_2)
+```
+
+## Report Model Outputs in summary table 
+
+Model Summary
+
+```{r}
+modelsummary(model_2)
+```
+
+Use Stargazer: {r, results='asis'}
+
+```{r, results='asis'}
+stargazer(model_2, type = "html")
+```
+
+
